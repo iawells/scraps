@@ -1,0 +1,32 @@
+#!/bin/bash
+set -ex
+
+pw=secret
+
+sudo apt-get install -y git
+sudo useradd -s /bin/bash -d /opt/stack -m stack
+sudo chmod +x /opt/stack
+echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
+
+cat <<EOF >/tmp/do-devstack
+#!/bin/bash
+set -ex
+
+git clone https://opendev.org/openstack/devstack
+cd devstack
+cat <<E2 >local.conf
+[[local|localrc]]
+ADMIN_PASSWORD=$pw
+DATABASE_PASSWORD=$pw
+RABBIT_PASSWORD=$pw
+SERVICE_PASSWORD=$pw
+E2
+if ./stack.sh ; then
+	echo devstackery complete.
+else
+	echo DEVSTACKERY FAILED
+fi
+
+EOF
+chmod +x /tmp/do-devstack
+sudo -u stack /tmp/do-devstack
